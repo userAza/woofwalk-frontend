@@ -10,30 +10,45 @@ const end_time = ref("12:00:00");
 const dogs = ref(1);
 
 const walkers = ref([]);
-const error = ref("");
+const error = ref(null);
 const loading = ref(false);
 
 async function search() {
-  error.value = "";
-  walkers.value = [];
+  if (
+    !location.value ||
+    !date.value ||
+    !start_time.value ||
+    !end_time.value ||
+    !dogs.value
+  ) {
+    error.value = "Please fill in all fields";
+    return;
+  }
+
   loading.value = true;
+  error.value = null;
 
   try {
-    const qs = new URLSearchParams({
-      location: location.value,
-      date: date.value,
-      start_time: start_time.value,
-      end_time: end_time.value,
-      dogs: String(dogs.value),
-    });
+    const query = new URLSearchParams({
+    location: location.value,
+    date: date.value,
+    start_time: start_time.value,
+    end_time: end_time.value,
+    dogs: dogs.value
+    }).toString();
 
-    walkers.value = await apiGet(`/api/walkers/search?${qs.toString()}`);
+walkers.value = await apiGet(`/walkers/search?${query}`);
+
+
   } catch (e) {
-    error.value = e.message || "Failed to fetch";
+    error.value = "Failed to fetch";
   } finally {
     loading.value = false;
   }
 }
+
+
+
 </script>
 
 <template>
@@ -55,9 +70,12 @@ async function search() {
     <p v-if="error" style="color: red;">{{ error }}</p>
 
     <ul v-if="walkers.length">
-      <li v-for="w in walkers" :key="w.id">
-        {{ w.name }} — {{ w.location }} — €{{ Number(w.price_per_30min).toFixed(2) }}
-      </li>
+        <li v-for="w in walkers" :key="w.id">
+        <router-link :to="`/walkers/${w.id}`">
+            {{ w.name }} — {{ w.location }} — €{{ Number(w.price_per_30min).toFixed(2) }}
+        </router-link>
+        </li>
+
     </ul>
 
     <p v-else-if="!loading && !error">No walkers found for this filter.</p>

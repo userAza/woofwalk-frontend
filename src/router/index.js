@@ -9,7 +9,8 @@ const routes = [
   { path: "/", component: Home },
   { path: "/walkers", component: BrowseWalkers },
   { path: "/login", component: Login },
-  { path: "/register", component: Register }
+  { path: "/register", component: Register },
+  { path: "/walkers/:id", component: () => import("../pages/walkerProfile.vue") }
 ];
 
 const router = createRouter({
