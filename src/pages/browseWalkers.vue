@@ -1,18 +1,37 @@
+<script setup>
+import { ref, onMounted } from "vue";
+
+const walkers = ref([]);
+const error = ref("");
+
+onMounted(async () => {
+  try {
+    const res = await fetch(
+      "http://localhost:3000/api/walkers/search?" +
+        new URLSearchParams({
+          location: "Antwerp",
+          date: "2025-01-10",
+          start_time: "09:00",
+          end_time: "10:00",
+          dogs: 1
+        })
+    );
+
+    walkers.value = await res.json();
+  } catch {
+    error.value = "Failed to load walkers";
+  }
+});
+</script>
+
 <template>
-  <section>
-    <h2>Available Dog Walkers</h2>
+  <h2>Available Dog Walkers</h2>
 
-    <div class="walkers-grid">
-      <div class="walker-card" v-for="n in 3" :key="n">
-        <h3>Walker Name</h3>
-        <p>City: Antwerp</p>
-        <p>€15 / 30 min</p>
-        <p>⭐ 4.8</p>
+  <p v-if="error">{{ error }}</p>
 
-        <router-link class="btn small" to="#">
-          View profile
-        </router-link>
-      </div>
-    </div>
-  </section>
+  <ul>
+    <li v-for="w in walkers" :key="w.id">
+      {{ w.name }} – {{ w.location }} – €{{ w.price_per_30min }}
+    </li>
+  </ul>
 </template>
