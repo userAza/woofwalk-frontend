@@ -1,15 +1,15 @@
 <template>
   <div class="app">
-    <header class="navbar">
-      <h1 class="logo">WoofWalk</h1>
-      <nav>
-        <router-link to="/">Home</router-link>
-        <router-link to="/login">Login</router-link>
-      </nav>
-    </header>
+    <h1>WoofWalk</h1>
 
-    <main class="page">
-      <router-view />
-    </main>
+    <nav class="nav">
+      <router-link to="/">Home</router-link>
+      <router-link to="/walkers">Browse Walkers</router-link>
+      <router-link to="/login">Login</router-link>
+      <router-link to="/register">Register</router-link>
+    </nav>
+
+
+    <router-view />
   </div>
 </template>

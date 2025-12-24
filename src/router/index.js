@@ -1,17 +1,20 @@
 import { createRouter, createWebHistory } from "vue-router";
 
-// TEMP pages (we create real ones later)
-const Home = { template: "<h2>Home</h2>" };
-const Login = { template: "<h2>Login</h2>" };
+import Home from "../pages/home.vue";
+import BrowseWalkers from "../pages/browseWalkers.vue";
+import Login from "../pages/login.vue";
+import Register from "../pages/register.vue";
 
 const routes = [
-  { path: "/", name: "home", component: Home },
-  { path: "/login", name: "login", component: Login },
+  { path: "/", component: Home },
+  { path: "/walkers", component: BrowseWalkers },
+  { path: "/login", component: Login },
+  { path: "/register", component: Register }
 ];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes,
+  routes
 });
 
 export default router;

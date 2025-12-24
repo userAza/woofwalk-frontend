@@ -27,18 +27,49 @@ body {
 }
 
 /* Navigation */
-nav {
-  margin-bottom: 40px;
+.nav {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 20px 0;
 }
 
-/* Nav links */
-nav a {
-  color: black;
+.nav a {
   text-decoration: none;
-  margin: 0 12px;
-  font-weight: normal;
+  color: black;
+  font-weight: 500;
 }
 
-nav a:hover {
-  text-decoration: underline;
+.nav a.router-link-active {
+  border-bottom: 2px solid hotpink;
+}
+
+.home {
+  margin-top: 60px;
+}
+
+.subtitle {
+  margin: 20px 0 40px;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: 2px solid black;
+  text-decoration: none;
+  color: black;
+  font-weight: 500;
+}
+
+.btn.primary {
+  background: hotpink;
+  color: white;
+  border-color: hotpink;
 }
