@@ -12,9 +12,59 @@ const walkers = ref([]);
 const error = ref(null);
 const loading = ref(false);
 
+const addonsByWalker = ref({}); // { [walkerId]: addon[] }
+const selectedAddonsByWalker = ref({}); // { [walkerId]: number[] }
+
 function normalizeTime(t) {
   if (!t) return t;
   return t.length === 5 ? `${t}:00` : t;
+}
+
+function num(x) {
+  const n = Number(x);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function getSelectedAddons(walkerId) {
+  return selectedAddonsByWalker.value[walkerId] || [];
+}
+
+function setSelectedAddons(walkerId, ids) {
+  selectedAddonsByWalker.value = {
+    ...selectedAddonsByWalker.value,
+    [walkerId]: ids
+  };
+}
+
+function totalForWalker(w) {
+  const base = num(w.price_per_30min);
+  const selectedIds = getSelectedAddons(w.id);
+  const addons = addonsByWalker.value[w.id] || [];
+
+  const extra = selectedIds.reduce((sum, id) => {
+    const a = addons.find((x) => x.id === id);
+    return sum + (a ? num(a.price) : 0);
+  }, 0);
+
+  return (base + extra).toFixed(2);
+}
+
+async function loadAddonsForWalker(walkerId) {
+  // IMPORTANT: matches routes/addons.js => router.get("/walker/:walkerId")
+  // and server mount should be app.use("/api/addons", addonsRoutes)
+  try {
+    const list = await apiGet(`/addons/walker/${walkerId}`);
+    addonsByWalker.value = {
+      ...addonsByWalker.value,
+      [walkerId]: Array.isArray(list) ? list : []
+    };
+  } catch {
+    // If no route or error: just show none (no breaking the page)
+    addonsByWalker.value = {
+      ...addonsByWalker.value,
+      [walkerId]: []
+    };
+  }
 }
 
 async function search() {
@@ -35,7 +85,15 @@ async function search() {
       dogs: String(dogs.value)
     }).toString();
 
-    walkers.value = await apiGet(`/walkers/search?${query}`);
+    const res = await apiGet(`/walkers/search?${query}`);
+    walkers.value = Array.isArray(res) ? res : [];
+
+    // reset addon state for new search
+    addonsByWalker.value = {};
+    selectedAddonsByWalker.value = {};
+
+    // load addons for each walker found
+    await Promise.all(walkers.value.map((w) => loadAddonsForWalker(w.id)));
   } catch (e) {
     error.value = e?.message || "Failed to fetch";
   } finally {
@@ -82,13 +140,53 @@ async function search() {
     <p v-if="loading">Loading...</p>
     <p v-if="error" style="color: red;">{{ error }}</p>
 
-    <ul v-if="walkers.length">
-      <li v-for="w in walkers" :key="w.id">
-        <router-link :to="`/walkers/${w.id}`">
+    <div v-if="walkers.length">
+      <div
+        v-for="w in walkers"
+        :key="w.id"
+        class="card"
+        style="text-align:left; max-width: 800px; margin: 20px auto;"
+      >
+        <router-link :to="`/walkers/${w.id}`" style="font-weight:bold; font-size:18px;">
           {{ w.name }}
         </router-link>
-      </li>
-    </ul>
+
+        <p><strong>Location:</strong> {{ w.location }}</p>
+        <p><strong>Base price (30 min):</strong> €{{ Number(w.price_per_30min || 0).toFixed(2) }}</p>
+        <p><strong>Max dogs:</strong> {{ w.max_dogs_per_walk }}</p>
+
+        <!-- Add-ons toggles (DB driven, not hardcoded) -->
+        <div v-if="(addonsByWalker[w.id] || []).length" style="margin-top: 12px;">
+          <strong>Extras:</strong>
+          <div
+            v-for="a in addonsByWalker[w.id]"
+            :key="a.id"
+            style="margin-top: 6px;"
+          >
+            <label>
+              <input
+                type="checkbox"
+                :value="a.id"
+                :checked="getSelectedAddons(w.id).includes(a.id)"
+                @change="(ev) => {
+                  const checked = ev.target.checked;
+                  const current = getSelectedAddons(w.id);
+                  const next = checked
+                    ? [...current, a.id]
+                    : current.filter((x) => x !== a.id);
+                  setSelectedAddons(w.id, next);
+                }"
+              />
+              {{ a.name }} — €{{ Number(a.price || 0).toFixed(2) }}
+            </label>
+          </div>
+        </div>
+
+        <p style="margin-top: 12px; font-weight:bold;">
+          Total price: €{{ totalForWalker(w) }}
+        </p>
+      </div>
+    </div>
 
     <p v-else-if="!loading && !error">No walkers found for this filter.</p>
   </div>
