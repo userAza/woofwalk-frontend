@@ -24,8 +24,7 @@ function normalizeTime(t) {
 }
 
 function formatDate(dateStr) {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("nl-BE");
+  return new Date(dateStr).toLocaleDateString("nl-BE");
 }
 
 function formatTime(timeStr) {
@@ -34,28 +33,26 @@ function formatTime(timeStr) {
 
 function parseDateToYYYYMMDD(dateValue) {
   if (!dateValue) return null;
-
   if (typeof dateValue === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
     return dateValue;
   }
-
   const d = new Date(dateValue);
-  const year = d.getUTCFullYear();
-  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
-/* ===== TOTAL PRICE ===== */
-const totalPrice = computed(() => {
-  if (!walker.value) return "0.00";
+/* ===== SAFE BASE PRICE ===== */
+const basePrice = computed(() => {
+  if (!walker.value) return 0;
+  return Number(walker.value.price_per_30min) || 0;
+});
 
-  let total = walker.value.price_per_30min || 0;
+/* ===== TOTAL PRICE (LIVE) ===== */
+const totalPrice = computed(() => {
+  let total = basePrice.value;
 
   selectedAddons.value.forEach((id) => {
     const addon = addons.value.find((a) => a.id === id);
-    if (addon) total += addon.price;
+    if (addon) total += Number(addon.price);
   });
 
   return total.toFixed(2);
@@ -76,16 +73,12 @@ async function loadPage() {
 
     dogs.value = await apiGet("/dogs");
 
-    // addons may be empty → must NOT break page
     try {
       addons.value = await apiGet(`/walker-addons/walker/${id}`);
     } catch {
       addons.value = [];
     }
-
-    // IMPORTANT: clear any false error
-    error.value = "";
-  } catch (e) {
+  } catch {
     error.value = "Failed to load walker";
   } finally {
     loading.value = false;
@@ -140,21 +133,18 @@ onMounted(loadPage);
     <div class="card">
       <p><strong>Location:</strong> {{ walker.location }}</p>
       <p><strong>Bio:</strong> {{ walker.bio }}</p>
-      <p><strong>Price (30 min):</strong> €{{ walker.price_per_30min }}</p>
+      <p><strong>Price (30 min):</strong> €{{ basePrice.toFixed(2) }}</p>
       <p><strong>Max dogs:</strong> {{ walker.max_dogs_per_walk }}</p>
     </div>
 
     <div class="card">
       <h3>Available time</h3>
-
       <ul v-if="availability.length">
-        <li v-for="(a, idx) in availability" :key="idx">
+        <li v-for="(a, i) in availability" :key="i">
           {{ formatDate(a.date) }} —
           {{ formatTime(a.start_time) }} → {{ formatTime(a.end_time) }}
         </li>
       </ul>
-
-      <p v-else>No availability listed.</p>
     </div>
 
     <div class="card">
@@ -177,26 +167,27 @@ onMounted(loadPage);
       </div>
 
       <div v-if="addons.length" style="margin-top:15px;">
-        <h4>Optional add-ons:</h4>
+        <h4>Extra services (optional):</h4>
         <label v-for="addon in addons" :key="addon.id" style="display:block;">
           <input type="checkbox" :value="addon.id" v-model="selectedAddons" />
-          {{ addon.name }} — €{{ addon.price.toFixed(2) }}
+          {{ addon.name }} (+€{{ Number(addon.price).toFixed(2) }})
         </label>
       </div>
 
-    <div v-if="bookingDate" style="margin-top:15px;">
-    <p><strong>Base price:</strong> €{{ walker.price_per_30min.toFixed(2) }}</p>
+      <div v-if="bookingDate" style="margin-top:15px;">
+        <p><strong>Base price:</strong> €{{ basePrice.toFixed(2) }}</p>
 
-    <p v-for="addon in addons.filter(a => selectedAddons.includes(a.id))"
-        :key="addon.id">
-        + {{ addon.name }} €{{ addon.price.toFixed(2) }}
-    </p>
+        <p
+          v-for="addon in addons.filter(a => selectedAddons.includes(a.id))"
+          :key="addon.id"
+        >
+          + {{ addon.name }} €{{ Number(addon.price).toFixed(2) }}
+        </p>
 
-    <p style="font-size:18px;font-weight:bold;">
-        Total price: €{{ totalPrice }}
-    </p>
-    </div>
-
+        <p style="font-size:18px;font-weight:bold;">
+          Total price: €{{ totalPrice }}
+        </p>
+      </div>
 
       <button @click="bookWalker" style="margin-top:10px;">Book</button>
 
@@ -206,5 +197,4 @@ onMounted(loadPage);
   </div>
 
   <p v-if="loading">Loading...</p>
-  <p v-if="!loading && error && !walker">{{ error }}</p>
 </template>

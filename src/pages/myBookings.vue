@@ -14,22 +14,6 @@ function formatTime(timeStr) {
   return (timeStr || "").slice(0, 5);
 }
 
-function parseAddons(addonsStr) {
-  if (!addonsStr) return [];
-
-  return addonsStr.split("|").map((a) => {
-    const [name, price] = a.split(":");
-    return { name, price: Number(price) };
-  });
-}
-
-function calculateTotal(basePrice, addons) {
-  return (
-    basePrice +
-    addons.reduce((sum, a) => sum + a.price, 0)
-  ).toFixed(2);
-}
-
 async function loadBookings() {
   loading.value = true;
   error.value = "";
@@ -44,7 +28,7 @@ async function loadBookings() {
 }
 
 async function cancelBooking(id) {
-  if (!confirm("Cancel this booking?")) return;
+  if (!confirm("Are you sure you want to cancel this booking?")) return;
 
   try {
     await apiPatch(`/bookings/${id}/cancel`, {});
@@ -64,27 +48,27 @@ onMounted(loadBookings);
     <p v-if="loading">Loading...</p>
     <p v-if="error" style="color:red">{{ error }}</p>
 
-    <div v-for="b in bookings" :key="b.id" class="card">
+    <div v-if="!loading && bookings.length === 0" class="card">
+      You have no bookings yet.
+    </div>
+
+    <div v-for="b in bookings" :key="b.id" class="card" style="text-align:left">
       <p><strong>Walker:</strong> {{ b.walker_name }}</p>
       <p><strong>Date:</strong> {{ formatDate(b.date) }}</p>
-      <p><strong>Time:</strong> {{ formatTime(b.start_time) }} → {{ formatTime(b.end_time) }}</p>
-      <p><strong>Dogs:</strong> {{ b.dogs }}</p>
-      <p><strong>Status:</strong> {{ b.status }}</p>
-
-      <div v-if="b.addons">
-        <h4>Extras:</h4>
-        <p
-          v-for="a in parseAddons(b.addons)"
-          :key="a.name"
-        >
-          {{ a.name }} +€{{ a.price.toFixed(2) }}
-        </p>
-      </div>
-
-      <p style="font-weight:bold;margin-top:10px;">
-        Total price: €
-        {{ calculateTotal(10, parseAddons(b.addons)) }}
+      <p>
+        <strong>Time:</strong>
+        {{ formatTime(b.start_time) }} → {{ formatTime(b.end_time) }}
       </p>
+
+      <p v-if="b.dogs"><strong>Dogs:</strong> {{ b.dogs }}</p>
+      <p v-if="b.addons"><strong>Add-ons:</strong> {{ b.addons }}</p>
+
+      <p>
+        <strong>Total price:</strong>
+        €{{ Number(b.total_price).toFixed(2) }}
+      </p>
+
+      <p><strong>Status:</strong> {{ b.status }}</p>
 
       <button
         v-if="b.status !== 'cancelled' && b.status !== 'done'"
