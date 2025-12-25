@@ -1,25 +1,24 @@
 <script setup>
-import { computed } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
 
-const isLoggedIn = computed(() => !!localStorage.getItem("token"));
+/* 🔑 reactive login state */
+const isLoggedIn = ref(false);
 
-const user = computed(() => {
-  try {
-    return JSON.parse(localStorage.getItem("user"));
-  } catch {
-    return null;
-  }
+onMounted(() => {
+  isLoggedIn.value = !!localStorage.getItem("token");
 });
 
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+  isLoggedIn.value = false;
   router.push("/");
 }
 </script>
+
 
 <template>
   <div class="app">

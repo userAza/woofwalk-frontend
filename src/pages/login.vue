@@ -19,11 +19,15 @@ async function submit() {
       email: email.value.trim(),
       password: password.value
     });
-
+    
     localStorage.setItem("token", res.token);
     if (res.user) localStorage.setItem("user", JSON.stringify(res.user));
 
+    window.location.reload(); 
+
     router.push("/profile");
+
+
   } catch (e) {
     error.value = e.message || "Login failed";
   } finally {
