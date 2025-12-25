@@ -2,18 +2,19 @@
 import { ref } from "vue";
 import { apiGet } from "../services/api";
 
-const location = ref("Antwerp");
-const date = ref("2025-01-10");
-const start_time = ref("09:00");
-const end_time = ref("12:00");
-const dogs = ref(1);
+// EMPTY by default (no prefilled data)
+const location = ref("");
+const date = ref("");
+const start_time = ref("");
+const end_time = ref("");
+const dogs = ref("");
 
 const walkers = ref([]);
 const error = ref(null);
 const loading = ref(false);
 
-const addonsByWalker = ref({}); // { [walkerId]: addon[] }
-const selectedAddonsByWalker = ref({}); // { [walkerId]: number[] }
+const addonsByWalker = ref({});
+const selectedAddonsByWalker = ref({});
 
 function normalizeTime(t) {
   if (!t) return t;
@@ -50,8 +51,6 @@ function totalForWalker(w) {
 }
 
 async function loadAddonsForWalker(walkerId) {
-  // IMPORTANT: matches routes/addons.js => router.get("/walker/:walkerId")
-  // and server mount should be app.use("/api/addons", addonsRoutes)
   try {
     const list = await apiGet(`/addons/walker/${walkerId}`);
     addonsByWalker.value = {
@@ -59,7 +58,6 @@ async function loadAddonsForWalker(walkerId) {
       [walkerId]: Array.isArray(list) ? list : []
     };
   } catch {
-    // If no route or error: just show none (no breaking the page)
     addonsByWalker.value = {
       ...addonsByWalker.value,
       [walkerId]: []
@@ -88,11 +86,9 @@ async function search() {
     const res = await apiGet(`/walkers/search?${query}`);
     walkers.value = Array.isArray(res) ? res : [];
 
-    // reset addon state for new search
     addonsByWalker.value = {};
     selectedAddonsByWalker.value = {};
 
-    // load addons for each walker found
     await Promise.all(walkers.value.map((w) => loadAddonsForWalker(w.id)));
   } catch (e) {
     error.value = e?.message || "Failed to fetch";
@@ -106,48 +102,43 @@ async function search() {
   <div>
     <h2>Available Dog Walkers</h2>
 
-    <div style="margin: 20px 0;">
-      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; align-items:flex-end;">
-        <div>
-          <div style="font-size:12px;">City</div>
-          <input v-model="location" placeholder="City" />
-        </div>
-
-        <div>
-          <div style="font-size:12px;">Date</div>
-          <input v-model="date" type="date" />
-        </div>
-
-        <div>
-          <div style="font-size:12px;">Start time</div>
-          <input v-model="start_time" type="time" />
-        </div>
-
-        <div>
-          <div style="font-size:12px;">End time</div>
-          <input v-model="end_time" type="time" />
-        </div>
-
-        <div>
-          <div style="font-size:12px;">Dogs</div>
-          <input v-model.number="dogs" type="number" min="1" style="width:80px;" />
-        </div>
-
-        <button @click="search">Search</button>
+    <!-- SEARCH BAR -->
+    <div class="search-bar">
+      <div class="field">
+        <label>City</label>
+        <input v-model="location" placeholder="City" />
       </div>
+
+      <div class="field">
+        <label>Date</label>
+        <input v-model="date" type="date" />
+      </div>
+
+      <div class="field">
+        <label>Start time</label>
+        <input v-model="start_time" type="time" />
+      </div>
+
+      <div class="field">
+        <label>End time</label>
+        <input v-model="end_time" type="time" />
+      </div>
+
+      <div class="field small">
+        <label>How many dogs?</label>
+        <input v-model.number="dogs" type="number" min="1" />
+      </div>
+
+      <button class="search-btn" @click="search">Search</button>
     </div>
 
     <p v-if="loading">Loading...</p>
-    <p v-if="error" style="color: red;">{{ error }}</p>
+    <p v-if="error" class="error">{{ error }}</p>
 
+    <!-- RESULTS -->
     <div v-if="walkers.length">
-      <div
-        v-for="w in walkers"
-        :key="w.id"
-        class="card"
-        style="text-align:left; max-width: 800px; margin: 20px auto;"
-      >
-        <router-link :to="`/walkers/${w.id}`" style="font-weight:bold; font-size:18px;">
+      <div v-for="w in walkers" :key="w.id" class="card">
+        <router-link :to="`/walkers/${w.id}`" class="walker-name">
           {{ w.name }}
         </router-link>
 
@@ -155,26 +146,22 @@ async function search() {
         <p><strong>Base price (30 min):</strong> €{{ Number(w.price_per_30min || 0).toFixed(2) }}</p>
         <p><strong>Max dogs:</strong> {{ w.max_dogs_per_walk }}</p>
 
-        <!-- Add-ons toggles (DB driven, not hardcoded) -->
-        <div v-if="(addonsByWalker[w.id] || []).length" style="margin-top: 12px;">
+        <div v-if="(addonsByWalker[w.id] || []).length" class="addons">
           <strong>Extras:</strong>
-          <div
-            v-for="a in addonsByWalker[w.id]"
-            :key="a.id"
-            style="margin-top: 6px;"
-          >
+
+          <div v-for="a in addonsByWalker[w.id]" :key="a.id">
             <label>
               <input
                 type="checkbox"
-                :value="a.id"
                 :checked="getSelectedAddons(w.id).includes(a.id)"
                 @change="(ev) => {
-                  const checked = ev.target.checked;
                   const current = getSelectedAddons(w.id);
-                  const next = checked
-                    ? [...current, a.id]
-                    : current.filter((x) => x !== a.id);
-                  setSelectedAddons(w.id, next);
+                  setSelectedAddons(
+                    w.id,
+                    ev.target.checked
+                      ? [...current, a.id]
+                      : current.filter(x => x !== a.id)
+                  );
                 }"
               />
               {{ a.name }} — €{{ Number(a.price || 0).toFixed(2) }}
@@ -182,12 +169,81 @@ async function search() {
           </div>
         </div>
 
-        <p style="margin-top: 12px; font-weight:bold;">
+        <p class="total">
           Total price: €{{ totalForWalker(w) }}
         </p>
       </div>
     </div>
 
-    <p v-else-if="!loading && !error">No walkers found for this filter.</p>
+    <p v-else-if="!loading && !error">
+      No walkers found for this filter.
+    </p>
   </div>
 </template>
+
+<style scoped>
+/* SEARCH BAR */
+.search-bar {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 30px 0;
+  align-items: flex-end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field label {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.field input {
+  height: 48px;
+  font-size: 18px;
+  padding: 8px 12px;
+  min-width: 180px;
+}
+
+.field.small input {
+  min-width: 90px;
+}
+
+.search-btn {
+  height: 48px;
+  font-size: 18px;
+  padding: 0 24px;
+  cursor: pointer;
+}
+
+/* RESULTS */
+.card {
+  max-width: 800px;
+  margin: 20px auto;
+  text-align: left;
+}
+
+.walker-name {
+  font-weight: bold;
+  font-size: 18px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.addons {
+  margin-top: 12px;
+}
+
+.total {
+  margin-top: 12px;
+  font-weight: bold;
+}
+
+.error {
+  color: red;
+}
+</style>

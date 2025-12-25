@@ -1,53 +1,32 @@
-const BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 function getToken() {
-  return localStorage.getItem("token") || "";
+  return localStorage.getItem("token");
 }
 
-async function request(path, options = {}) {
-  const headers = {
-    "Content-Type": "application/json",
-    ...(options.headers || {})
-  };
-
-  const token = getToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const res = await fetch(`${BASE}${path}`, {
-    ...options,
-    headers
+async function request(method, url, data) {
+  const res = await fetch(`${API_BASE}${url}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {})
+    },
+    body: data ? JSON.stringify(data) : undefined
   });
 
-  const text = await res.text();
-  let data = null;
-
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text || null;
-  }
-
   if (!res.ok) {
-    const msg =
-      (data && data.error) ||
-      (typeof data === "string" ? data : null) ||
-      `Request failed (${res.status})`;
-    const err = new Error(msg);
-    err.status = res.status;
-    throw err;
+    let msg = "Request failed";
+    try {
+      const json = await res.json();
+      msg = json.error || msg;
+    } catch {}
+    throw new Error(msg);
   }
 
-  return data;
+  return res.status === 204 ? null : res.json();
 }
 
-export function apiGet(path) {
-  return request(path, { method: "GET" });
-}
-
-export function apiPost(path, body) {
-  return request(path, { method: "POST", body: JSON.stringify(body) });
-}
-
-export function apiPatch(path, body) {
-  return request(path, { method: "PATCH", body: JSON.stringify(body) });
-}
+export const apiGet = (url) => request("GET", url);
+export const apiPost = (url, data) => request("POST", url, data);
+export const apiPatch = (url, data) => request("PATCH", url, data);
+export const apiDelete = (url) => request("DELETE", url);

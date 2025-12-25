@@ -14,8 +14,6 @@ const user = computed(() => {
   }
 });
 
-const isAdmin = computed(() => user.value?.role === "admin");
-
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
@@ -28,26 +26,36 @@ function logout() {
     <h1>WoofWalk</h1>
 
     <nav class="nav">
-      <router-link to="/">Home</router-link>
+      <!-- NOT LOGGED IN -->
+      <template v-if="!isLoggedIn">
+        <div class="auth-grid">
+          <router-link to="/login">Login</router-link>
+          <router-link to="/register">Create account</router-link>
+        </div>
 
-      <template v-if="isLoggedIn">
+        <router-link to="/admin/login">Admin</router-link>
+      </template>
+
+      <!-- LOGGED IN -->
+      <template v-else>
+        <router-link to="/">Home</router-link>
         <router-link to="/profile">Profile</router-link>
         <router-link to="/walkers">Browse Walkers</router-link>
         <router-link to="/bookings">My Bookings</router-link>
-
-        <!-- ✅ ADMIN BUTTON (visible to everyone) -->
         <router-link to="/admin/login">Admin</router-link>
-
         <button class="link-btn" @click="logout">Logout</button>
       </template>
-
-      <template v-else>
-        <router-link to="/login">Login</router-link>
-        <router-link to="/register">Register</router-link>
-      </template>
     </nav>
-
 
     <router-view />
   </div>
 </template>
+
+<style scoped>
+.auth-grid {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 16px;
+  align-items: center;
+}
+</style>
