@@ -10,7 +10,16 @@
 
     <div class="hero-actions">
       <router-link class="btn primary" to="/login">Login</router-link>
-      <router-link class="btn" to="/register">Create account</router-link>
+      <router-link class="btn secondary" to="/register">Create account</router-link>
     </div>
   </div>
 </template>
+
+<style scoped>
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 12px;
+}
+</style>

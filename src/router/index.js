@@ -17,7 +17,15 @@ const routes = [
   { path: "/profile", component: () => import("../pages/profile.vue"), meta: { auth: true } },
   { path: "/walkers", component: BrowseWalkers, meta: { auth: true } },
   { path: "/walkers/:id", component: () => import("../pages/walkerProfile.vue"), meta: { auth: true } },
-  { path: "/bookings", component: MyBookings, meta: { auth: true } }
+  { path: "/bookings", component: MyBookings, meta: { auth: true } },
+
+  // Admin
+  { path: "/admin/login", component: () => import("../pages/admin/adminLogin.vue") },
+  {
+    path: "/admin",
+    component: () => import("../pages/admin/adminDashboard.vue"),
+    meta: { auth: true, admin: true }
+  }
 ];
 
 const router = createRouter({
@@ -27,16 +35,14 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  // If page requires auth and user is not logged in
-  if (to.meta?.auth && !token) {
-    return "/login";
-  }
+  if (to.meta?.auth && !token) return "/login";
 
-  // If page is guest-only and user IS logged in
-  if (to.meta?.guestOnly && token) {
-    return "/walkers";
+  if (to.meta?.admin && user?.role !== "admin") {
+    return "/profile";
   }
 });
+
 
 export default router;
