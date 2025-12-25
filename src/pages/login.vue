@@ -23,7 +23,6 @@ async function submit() {
     localStorage.setItem("token", res.token);
     if (res.user) localStorage.setItem("user", JSON.stringify(res.user));
 
-    window.location.reload(); 
 
     router.push("/profile");
 

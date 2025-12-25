@@ -33,18 +33,22 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach((to) => {
+router.beforeEach((to, from, next) => {
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user"));
 
-  if (to.meta?.auth && !token) return "/login";
+  const publicPages = ["/", "/login", "/register", "/admin/login"];
+  const authRequired = !publicPages.includes(to.path);
 
-  if (to.meta?.admin && user?.role !== "admin") {
-    return "/profile";
+  if (authRequired && !token) {
+    return next("/login");
   }
 
-  // ✅ THIS IS THE FIX
-  return true;
+  if ((to.path === "/login" || to.path === "/register") && token) {
+    return next("/profile");
+  }
+
+  next();
 });
+
 
 export default router;
