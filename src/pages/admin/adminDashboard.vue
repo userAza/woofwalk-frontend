@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { apiGet, apiPost } from "../../services/api";
+import { apiGet, apiPost, apiPatch } from "../../services/api";
+
 
 const users = ref([]);
 const walkers = ref([]);
@@ -35,12 +36,27 @@ async function toggleSubscription(user) {
 // Ban / unban walker
 async function toggleBan(walker) {
   try {
-    await apiPost(`/admin/walkers/${walker.id}/ban`);
+    await apiPatch(
+  `/admin/walkers/${walker.id}/${walker.is_banned ? "unban" : "ban"}`
+);
+
     walker.is_banned = walker.is_banned ? 0 : 1;
   } catch {
     alert("Failed to update walker");
   }
 }
+
+async function toggleUserBan(user) {
+  try {
+    await apiPatch(
+      `/admin/users/${user.id}/${user.is_banned ? "unban" : "ban"}`
+    );
+    user.is_banned = user.is_banned ? 0 : 1;
+  } catch {
+    alert("Failed to update user");
+  }
+}
+
 
 onMounted(loadAdminData);
 </script>
@@ -62,6 +78,7 @@ onMounted(loadAdminData);
           <th>Email</th>
           <th>Role</th>
           <th>Subscription</th>
+          <th>Status</th>
           <th>Action</th>
         </tr>
 
@@ -70,11 +87,18 @@ onMounted(loadAdminData);
           <td>{{ u.email }}</td>
           <td>{{ u.role }}</td>
           <td>{{ u.subscription_active ? "Active" : "Inactive" }}</td>
-          <td>
+            <td>{{ u.is_banned ? "Banned" : "Active" }}</td>
+
+            <td>
             <button @click="toggleSubscription(u)">
-              Toggle subscription
+                Toggle subscription
             </button>
-          </td>
+
+            <button @click="toggleUserBan(u)" style="margin-left:8px;">
+                {{ u.is_banned ? "Unban" : "Ban" }}
+            </button>
+            </td>
+
         </tr>
       </table>
     </div>
