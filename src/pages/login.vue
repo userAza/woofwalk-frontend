@@ -20,10 +20,6 @@ async function submit() {
       password: password.value
     });
 
-    if (!res || !res.token) {
-      throw new Error("Login failed");
-    }
-
     localStorage.setItem("token", res.token);
     if (res.user) localStorage.setItem("user", JSON.stringify(res.user));
 
@@ -44,6 +40,7 @@ async function submit() {
       <div class="form">
         <input v-model="email" type="email" placeholder="Email" />
         <input v-model="password" type="password" placeholder="Password" />
+
         <button class="btn primary" :disabled="loading" @click="submit">
           {{ loading ? "Logging in..." : "Login" }}
         </button>

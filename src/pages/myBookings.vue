@@ -11,7 +11,7 @@ function formatDate(dateStr) {
   return d.toLocaleDateString("nl-BE");
 }
 
-async function load() {
+async function loadBookings() {
   loading.value = true;
   error.value = "";
 
@@ -25,51 +25,61 @@ async function load() {
 }
 
 async function cancelBooking(id) {
+  if (!confirm("Are you sure you want to cancel this booking?")) {
+    return;
+  }
+
   try {
     await apiPatch(`/bookings/${id}/cancel`, {});
-    await load();
+    await loadBookings();
   } catch (e) {
-    error.value = e.message || "Cancel failed";
+    error.value = e.message || "Failed to cancel booking";
   }
 }
 
-onMounted(load);
+onMounted(loadBookings);
 </script>
 
 <template>
-  <div class="page">
+  <div class="profile">
     <h2>My bookings</h2>
 
     <p v-if="loading">Loading...</p>
-    <p v-if="error" class="error">{{ error }}</p>
+    <p v-if="error" style="color:red">{{ error }}</p>
 
     <div v-if="!loading && bookings.length === 0" class="card">
-      No bookings yet.
+      You have no bookings yet.
     </div>
 
-    <div v-for="b in bookings" :key="b.id" class="card booking-card">
-      <div class="booking-row">
-        <div>
-          <strong>{{ b.walker_name }}</strong>
-          <div class="muted">{{ formatDate(b.date) }}</div>
-        </div>
+    <div
+      v-for="b in bookings"
+      :key="b.id"
+      class="card"
+      style="text-align:left"
+    >
+      <p>
+        <strong>Walker:</strong> {{ b.walker_name }}
+      </p>
 
-        <div class="right">
-          <div class="status">{{ b.status }}</div>
-        </div>
-      </div>
+      <p>
+        <strong>Date:</strong> {{ formatDate(b.date) }}
+      </p>
 
-      <div class="muted" v-if="b.dogs">Dogs: {{ b.dogs }}</div>
+      <p v-if="b.dogs">
+        <strong>Dogs:</strong> {{ b.dogs }}
+      </p>
 
-      <div class="booking-actions">
-        <button
-          v-if="b.status !== 'cancelled' && b.status !== 'done' && b.status !== 'declined'"
-          class="btn"
-          @click="cancelBooking(b.id)"
-        >
-          Cancel
-        </button>
-      </div>
+      <p>
+        <strong>Status:</strong> {{ b.status }}
+      </p>
+
+      <button
+        v-if="b.status !== 'cancelled' && b.status !== 'done'"
+        @click="cancelBooking(b.id)"
+        style="margin-top: 10px"
+      >
+        Cancel booking
+      </button>
     </div>
   </div>
 </template>

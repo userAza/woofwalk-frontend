@@ -8,14 +8,16 @@ import MyBookings from "../pages/myBookings.vue";
 
 const routes = [
   { path: "/", component: Home },
-  { path: "/login", component: Login },
-  { path: "/register", component: Register },
 
+  // Auth pages (guests only)
+  { path: "/login", component: Login, meta: { guestOnly: true } },
+  { path: "/register", component: Register, meta: { guestOnly: true } },
+
+  // Protected pages
+  { path: "/profile", component: () => import("../pages/profile.vue"), meta: { auth: true } },
   { path: "/walkers", component: BrowseWalkers, meta: { auth: true } },
   { path: "/walkers/:id", component: () => import("../pages/walkerProfile.vue"), meta: { auth: true } },
-  { path: "/bookings", component: MyBookings, meta: { auth: true } },
-  { path: "/profile", component: () => import("../pages/profile.vue"), meta: { auth: true } },
-
+  { path: "/bookings", component: MyBookings, meta: { auth: true } }
 ];
 
 const router = createRouter({
@@ -24,9 +26,16 @@ const router = createRouter({
 });
 
 router.beforeEach((to) => {
-  if (to.meta && to.meta.auth) {
-    const token = localStorage.getItem("token");
-    if (!token) return "/login";
+  const token = localStorage.getItem("token");
+
+  // If page requires auth and user is not logged in
+  if (to.meta?.auth && !token) {
+    return "/login";
+  }
+
+  // If page is guest-only and user IS logged in
+  if (to.meta?.guestOnly && token) {
+    return "/walkers";
   }
 });
 

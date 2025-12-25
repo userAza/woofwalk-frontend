@@ -22,14 +22,10 @@ async function submit() {
       password: password.value
     });
 
-    if (res && res.token) {
-      localStorage.setItem("token", res.token);
-      if (res.user) localStorage.setItem("user", JSON.stringify(res.user));
-      router.push("/profile");
-      return;
-    }
+    localStorage.setItem("token", res.token);
+    if (res.user) localStorage.setItem("user", JSON.stringify(res.user));
 
-    router.push("/login");
+    router.push("/profile");
   } catch (e) {
     error.value = e.message || "Registration failed";
   } finally {
