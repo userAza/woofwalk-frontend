@@ -8,10 +8,11 @@ const route = useRoute();
 const walker = ref(null);
 const availability = ref([]);
 const dogs = ref([]);
+const addons = ref([]);
 
 const bookingDate = ref("");
-const selectedSlotKey = ref("");
 const selectedDogs = ref([]);
+const selectedAddons = ref([]);
 
 const loading = ref(false);
 const error = ref("");
@@ -31,6 +32,36 @@ function formatTime(timeStr) {
   return (timeStr || "").slice(0, 5);
 }
 
+function parseDateToYYYYMMDD(dateValue) {
+  if (!dateValue) return null;
+
+  if (typeof dateValue === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return dateValue;
+  }
+
+  const d = new Date(dateValue);
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+/* ===== TOTAL PRICE ===== */
+const totalPrice = computed(() => {
+  if (!walker.value) return "0.00";
+
+  let total = walker.value.price_per_30min || 0;
+
+  selectedAddons.value.forEach((id) => {
+    const addon = addons.value.find((a) => a.id === id);
+    if (addon) total += addon.price;
+  });
+
+  return total.toFixed(2);
+});
+
+/* ===== LOAD PAGE ===== */
 async function loadPage() {
   loading.value = true;
   error.value = "";
@@ -40,16 +71,20 @@ async function loadPage() {
     const id = route.params.id;
 
     const res = await apiGet(`/walkers/${id}`);
-
-    // backend may return { walker, availability } OR just walker
     walker.value = res.walker ?? res;
-
-    availability.value = Array.isArray(res.availability)
-    ? res.availability
-    : [];
-
+    availability.value = res.availability ?? [];
 
     dogs.value = await apiGet("/dogs");
+
+    // addons may be empty → must NOT break page
+    try {
+      addons.value = await apiGet(`/walker-addons/walker/${id}`);
+    } catch {
+      addons.value = [];
+    }
+
+    // IMPORTANT: clear any false error
+    error.value = "";
   } catch (e) {
     error.value = "Failed to load walker";
   } finally {
@@ -57,32 +92,39 @@ async function loadPage() {
   }
 }
 
-const slotsForSelectedDate = computed(() => {
-  if (!bookingDate.value) return [];
-  return availability.value.filter(a => a.date === bookingDate.value);
-});
-
+/* ===== BOOK WALKER ===== */
 async function bookWalker() {
   error.value = "";
   success.value = "";
 
-  if (!walker.value || !bookingDate.value || !selectedSlotKey.value || !selectedDogs.value.length) {
+  if (!walker.value || !bookingDate.value || !selectedDogs.value.length) {
     error.value = "Missing booking data";
     return;
   }
 
-  const [date, start_time, end_time] = selectedSlotKey.value.split("|");
+  const slot = availability.value.find(
+    (a) => parseDateToYYYYMMDD(a.date) === bookingDate.value
+  );
+
+  if (!slot) {
+    error.value = "No availability for selected date";
+    return;
+  }
 
   try {
     await apiPost("/bookings", {
       walker_id: walker.value.id,
-      date,
-      start_time: normalizeTime(start_time),
-      end_time: normalizeTime(end_time),
-      dog_ids: selectedDogs.value
+      date: bookingDate.value,
+      start_time: normalizeTime(slot.start_time),
+      end_time: normalizeTime(slot.end_time),
+      dog_ids: selectedDogs.value,
+      addon_ids: selectedAddons.value
     });
 
     success.value = "Booking created!";
+    bookingDate.value = "";
+    selectedDogs.value = [];
+    selectedAddons.value = [];
   } catch (e) {
     error.value = e?.message || "Booking failed";
   }
@@ -103,7 +145,7 @@ onMounted(loadPage);
     </div>
 
     <div class="card">
-      <h3>Available times</h3>
+      <h3>Available time</h3>
 
       <ul v-if="availability.length">
         <li v-for="(a, idx) in availability" :key="idx">
@@ -120,25 +162,43 @@ onMounted(loadPage);
 
       <input type="date" v-model="bookingDate" />
 
-      <select v-model="selectedSlotKey" :disabled="!bookingDate">
-        <option value="">Select a slot</option>
-        <option
-          v-for="(s, idx) in slotsForSelectedDate"
-          :key="idx"
-          :value="`${s.date}|${s.start_time}|${s.end_time}`"
-        >
-          {{ formatTime(s.start_time) }} → {{ formatTime(s.end_time) }}
-        </option>
-      </select>
+      <p v-if="bookingDate && availability.length">
+        <strong>Time:</strong>
+        {{ formatTime(availability[0].start_time) }} →
+        {{ formatTime(availability[0].end_time) }}
+      </p>
 
       <div v-if="dogs.length">
-        <label v-for="d in dogs" :key="d.id">
+        <h4>Select your dogs:</h4>
+        <label v-for="d in dogs" :key="d.id" style="display:block;">
           <input type="checkbox" :value="d.id" v-model="selectedDogs" />
           {{ d.name }} — {{ d.breed }} ({{ d.age }}y)
         </label>
       </div>
 
-      <button @click="bookWalker">Book</button>
+      <div v-if="addons.length" style="margin-top:15px;">
+        <h4>Optional add-ons:</h4>
+        <label v-for="addon in addons" :key="addon.id" style="display:block;">
+          <input type="checkbox" :value="addon.id" v-model="selectedAddons" />
+          {{ addon.name }} — €{{ addon.price.toFixed(2) }}
+        </label>
+      </div>
+
+    <div v-if="bookingDate" style="margin-top:15px;">
+    <p><strong>Base price:</strong> €{{ walker.price_per_30min.toFixed(2) }}</p>
+
+    <p v-for="addon in addons.filter(a => selectedAddons.includes(a.id))"
+        :key="addon.id">
+        + {{ addon.name }} €{{ addon.price.toFixed(2) }}
+    </p>
+
+    <p style="font-size:18px;font-weight:bold;">
+        Total price: €{{ totalPrice }}
+    </p>
+    </div>
+
+
+      <button @click="bookWalker" style="margin-top:10px;">Book</button>
 
       <p v-if="error" style="color:red">{{ error }}</p>
       <p v-if="success" style="color:green">{{ success }}</p>
