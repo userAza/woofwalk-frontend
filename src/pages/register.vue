@@ -58,3 +58,44 @@ async function submit() {
     </div>
   </div>
 </template>
+
+<style scoped>
+    .hint {
+  margin-top: 18px;
+}
+
+    .page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* the white box */
+.card {
+  margin: 0 auto;
+  width: 420px;              /* bigger */
+  padding: 30px 35px;        /* more space */
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* inputs */
+.card input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  margin-bottom: 14px;
+}
+
+/* button */
+.card button {
+  padding: 10px 18px;
+  font-size: 15px;
+  margin-top: 10px;
+}
+
+/* title spacing */
+h2 {
+  margin-bottom: 30px;
+}
+</style scoped>

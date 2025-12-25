@@ -12,7 +12,7 @@ const isLoggedIn = computed(() => !!localStorage.getItem("token"));
       WoofWalk helps you find trusted dog walkers near you.<br />
       Choose based on location, availability, price, and reviews.<br />
       Book a walk in a few clicks and relax.<br />
-      Log in or joins us to get started!
+    <strong>Log in or joins us to get started!</strong>
     </p>
 
     <p class="hero-joke">

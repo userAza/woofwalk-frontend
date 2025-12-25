@@ -55,3 +55,41 @@ async function submit() {
     </div>
   </div>
 </template>
+
+<style scoped>
+    .page {
+  padding-top: 5px;
+  padding-bottom: 140px;
+}
+
+h2 {
+  margin-bottom: 40px;
+  font-size: 28px;
+}
+
+.card {
+  max-width: 520px;          /* wider */
+  padding: 32px 36px;        /* more space inside */
+}
+
+.card input {
+  width: 100%;
+  padding: 12px 14px;        /* taller inputs */
+  font-size: 16px;
+  margin-bottom: 14px;
+}
+
+.card button {
+  padding: 12px 18px;        /* bigger button */
+  font-size: 16px;
+}
+
+.card p {
+  margin-top: 16px;
+  font-size: 14px;
+}
+.card {
+  margin: 0 auto;   /* ← THIS centers it */
+}
+
+</style scoped>
