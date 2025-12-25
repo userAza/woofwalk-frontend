@@ -1,75 +1,64 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { apiPost } from "../services/api";
+
+const router = useRouter();
 
 const name = ref("");
 const email = ref("");
 const password = ref("");
-const error = ref(null);
+const loading = ref(false);
+const error = ref("");
 
-const router = useRouter();
-
-async function register() {
-  error.value = null;
-
-  if (!name.value || !email.value || !password.value) {
-    error.value = "Please fill in all fields";
-    return;
-  }
+async function submit() {
+  error.value = "";
+  loading.value = true;
 
   try {
-    const res = await fetch("http://localhost:3000/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: name.value,
-        email: email.value,
-        password: password.value
-      })
+    const res = await apiPost("/auth/register", {
+      name: name.value.trim(),
+      email: email.value.trim(),
+      password: password.value
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      error.value = data.error || "Registration failed";
+    if (res && res.token) {
+      localStorage.setItem("token", res.token);
+      if (res.user) localStorage.setItem("user", JSON.stringify(res.user));
+      router.push("/profile");
       return;
     }
 
-    localStorage.setItem("token", data.token);
-    router.push("/walkers");
-  } catch {
-    error.value = "Registration failed";
+    router.push("/login");
+  } catch (e) {
+    error.value = e.message || "Registration failed";
+  } finally {
+    loading.value = false;
   }
 }
 </script>
 
 <template>
   <div class="page">
-    <h2>Register</h2>
+    <h2>Create account</h2>
 
-    <div class="card">
-      <input
-        placeholder="Name"
-        v-model="name"
-      />
-      <br /><br />
-      <input
-        type="email"
-        placeholder="Email"
-        v-model="email"
-      />
-      <br /><br />
-      <input
-        type="password"
-        placeholder="Password"
-        v-model="password"
-      />
-      <br /><br />
-      <button @click="register">Register</button>
+    <div class="card form-card">
+      <div class="form">
+        <input v-model="name" placeholder="Full name" />
+        <input v-model="email" type="email" placeholder="Email" />
+        <input v-model="password" type="password" placeholder="Password" />
 
-      <p v-if="error" style="color:red; margin-top:10px;">
-        {{ error }}
-      </p>
+        <button class="btn primary" :disabled="loading" @click="submit">
+          {{ loading ? "Creating..." : "Create account" }}
+        </button>
+
+        <p v-if="error" class="error">{{ error }}</p>
+
+        <p class="hint">
+          Already have an account?
+          <router-link to="/login">Login</router-link>
+        </p>
+      </div>
     </div>
   </div>
 </template>

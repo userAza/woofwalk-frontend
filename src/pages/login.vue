@@ -1,42 +1,37 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-
-const email = ref("");
-const password = ref("");
-const error = ref(null);
+import { apiPost } from "../services/api";
 
 const router = useRouter();
 
-async function login() {
-  error.value = null;
+const email = ref("");
+const password = ref("");
+const loading = ref(false);
+const error = ref("");
 
-  if (!email.value || !password.value) {
-    error.value = "Please fill in all fields";
-    return;
-  }
+async function submit() {
+  error.value = "";
+  loading.value = true;
 
   try {
-    const res = await fetch("http://localhost:3000/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: email.value,
-        password: password.value
-      })
+    const res = await apiPost("/auth/login", {
+      email: email.value.trim(),
+      password: password.value
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      error.value = data.error || "Login failed";
-      return;
+    if (!res || !res.token) {
+      throw new Error("Login failed");
     }
 
-    localStorage.setItem("token", data.token);
-    router.push("/walkers");
-  } catch {
-    error.value = "Login failed";
+    localStorage.setItem("token", res.token);
+    if (res.user) localStorage.setItem("user", JSON.stringify(res.user));
+
+    router.push("/profile");
+  } catch (e) {
+    error.value = e.message || "Login failed";
+  } finally {
+    loading.value = false;
   }
 }
 </script>
@@ -45,24 +40,21 @@ async function login() {
   <div class="page">
     <h2>Login</h2>
 
-    <div class="card">
-      <input
-        type="email"
-        placeholder="Email"
-        v-model="email"
-      />
-      <br /><br />
-      <input
-        type="password"
-        placeholder="Password"
-        v-model="password"
-      />
-      <br /><br />
-      <button @click="login">Login</button>
+    <div class="card form-card">
+      <div class="form">
+        <input v-model="email" type="email" placeholder="Email" />
+        <input v-model="password" type="password" placeholder="Password" />
+        <button class="btn primary" :disabled="loading" @click="submit">
+          {{ loading ? "Logging in..." : "Login" }}
+        </button>
 
-      <p v-if="error" style="color:red; margin-top:10px;">
-        {{ error }}
-      </p>
+        <p v-if="error" class="error">{{ error }}</p>
+
+        <p class="hint">
+          No account yet?
+          <router-link to="/register">Create one</router-link>
+        </p>
+      </div>
     </div>
   </div>
 </template>
