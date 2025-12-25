@@ -1,12 +1,21 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { apiGet, apiPatch } from "../services/api";
+import { apiGet, apiPatch, apiPost } from "../services/api";
 
 const bookings = ref([]);
 const loading = ref(false);
 const error = ref("");
 
+// Review modal state
+const showReviewModal = ref(false);
+const reviewBooking = ref(null);
+const reviewRating = ref(0);
+const reviewComment = ref("");
+const reviewError = ref("");
+const reviewSubmitting = ref(false);
+
 function formatDate(dateStr) {
+  if (!dateStr) return "";
   return new Date(dateStr).toLocaleDateString("nl-BE");
 }
 
@@ -38,6 +47,47 @@ async function cancelBooking(id) {
   }
 }
 
+function openReview(booking) {
+  reviewBooking.value = booking;
+  reviewRating.value = 0;
+  reviewComment.value = "";
+  reviewError.value = "";
+  showReviewModal.value = true;
+}
+
+function closeReviewModal() {
+  showReviewModal.value = false;
+  reviewBooking.value = null;
+  reviewRating.value = 0;
+  reviewComment.value = "";
+  reviewError.value = "";
+}
+
+async function submitReview() {
+  if (reviewRating.value === 0) {
+    reviewError.value = "Please select a rating";
+    return;
+  }
+
+  reviewSubmitting.value = true;
+  reviewError.value = "";
+
+  try {
+    await apiPost("/reviews", {
+      booking_id: reviewBooking.value.id,
+      rating: reviewRating.value,
+      comment: reviewComment.value.trim() || null
+    });
+
+    closeReviewModal();
+    await loadBookings(); // Reload to update the reviewed status
+  } catch (e) {
+    reviewError.value = e.message || "Failed to submit review";
+  } finally {
+    reviewSubmitting.value = false;
+  }
+}
+
 onMounted(loadBookings);
 </script>
 
@@ -63,12 +113,20 @@ onMounted(loadBookings);
       <p v-if="b.dogs"><strong>Dogs:</strong> {{ b.dogs }}</p>
       <p v-if="b.addons"><strong>Add-ons:</strong> {{ b.addons }}</p>
 
-      <p>
+      <p v-if="b.total_price">
         <strong>Total price:</strong>
         €{{ Number(b.total_price).toFixed(2) }}
       </p>
 
       <p><strong>Status:</strong> {{ b.status }}</p>
+
+      <button
+        v-if="b.status === 'done' && !b.reviewed"
+        @click="openReview(b)"
+        style="margin-top:10px; margin-right:10px"
+      >
+        Leave review
+      </button>
 
       <button
         v-if="b.status !== 'cancelled' && b.status !== 'done'"
@@ -78,5 +136,86 @@ onMounted(loadBookings);
         Cancel booking
       </button>
     </div>
+
+    <!-- Review Modal -->
+    <div v-if="showReviewModal" class="modal-overlay" @click="closeReviewModal">
+      <div class="modal-content" @click.stop>
+        <h3>Review {{ reviewBooking?.walker_name }}</h3>
+
+        <div class="stars">
+          <span
+            v-for="star in 5"
+            :key="star"
+            class="star"
+            :class="{ active: star <= reviewRating }"
+            @click="reviewRating = star"
+          >
+            ★
+          </span>
+        </div>
+
+        <textarea
+          v-model="reviewComment"
+          placeholder="Optional: Share your experience..."
+          rows="4"
+          style="width: 100%; margin-top: 15px; padding: 10px;"
+        ></textarea>
+
+        <p v-if="reviewError" style="color:red; margin-top:10px">{{ reviewError }}</p>
+
+        <div style="margin-top: 15px;">
+          <button @click="submitReview" :disabled="reviewSubmitting">
+            {{ reviewSubmitting ? "Submitting..." : "Submit review" }}
+          </button>
+          <button @click="closeReviewModal" style="margin-left: 10px;">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  max-width: 500px;
+  width: 90%;
+}
+
+.stars {
+  display: flex;
+  gap: 10px;
+  font-size: 40px;
+  margin-top: 15px;
+}
+
+.star {
+  cursor: pointer;
+  color: #ddd;
+  transition: color 0.2s;
+}
+
+.star.active {
+  color: #ffc107;
+}
+
+.star:hover {
+  color: #ffeb3b;
+}
+</style>

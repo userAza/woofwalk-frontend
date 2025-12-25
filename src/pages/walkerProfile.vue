@@ -9,6 +9,8 @@ const walker = ref(null);
 const availability = ref([]);
 const dogs = ref([]);
 const addons = ref([]);
+const reviews = ref([]);
+const averageRating = ref(0);
 
 const bookingDate = ref("");
 const selectedDogs = ref([]);
@@ -24,6 +26,7 @@ function normalizeTime(t) {
 }
 
 function formatDate(dateStr) {
+  if (!dateStr) return "";
   const d = new Date(dateStr);
   return d.toLocaleDateString("nl-BE");
 }
@@ -97,9 +100,19 @@ async function loadPage() {
 
     dogs.value = await apiGet("/dogs");
 
-    // IMPORTANT: correct endpoint for routes/addons.js
+    // FIXED: Correct endpoint for your backend
     addons.value = await apiGet(`/addons/walker/${id}`);
     if (!Array.isArray(addons.value)) addons.value = [];
+
+    // Load reviews
+    try {
+      const reviewData = await apiGet(`/reviews/walker/${id}`);
+      reviews.value = reviewData.reviews || [];
+      averageRating.value = reviewData.average_rating || 0;
+    } catch (e) {
+      reviews.value = [];
+      averageRating.value = 0;
+    }
   } catch (e) {
     error.value = "Failed to load walker";
   } finally {
@@ -150,6 +163,17 @@ onMounted(loadPage);
       <p><strong>Bio:</strong> {{ walker.bio }}</p>
       <p><strong>Price (30 min):</strong> €{{ Number(walker.price_per_30min || 0).toFixed(2) }}</p>
       <p><strong>Max dogs:</strong> {{ walker.max_dogs_per_walk }}</p>
+      
+      <!-- Rating -->
+      <p class="rating">
+        ⭐ {{ averageRating.toFixed(1) }}
+        <span v-if="reviews.length">
+          ({{ reviews.length }} {{ reviews.length === 1 ? 'review' : 'reviews' }})
+        </span>
+        <span v-else>
+          (no reviews yet)
+        </span>
+      </p>
     </div>
 
     <div class="card">
@@ -165,10 +189,36 @@ onMounted(loadPage);
       <p v-else>No availability listed.</p>
     </div>
 
+    <!-- Reviews Section -->
+    <div class="card" v-if="reviews.length">
+      <h3>Reviews</h3>
+
+      <div v-for="review in reviews" :key="review.id" class="review">
+        <div class="review-header">
+          <div class="review-stars">
+            <span v-for="star in 5" :key="star" class="star" :class="{ filled: star <= review.rating }">
+              ★
+            </span>
+          </div>
+          <span class="review-author">{{ review.user_name }}</span>
+          <span class="review-date">{{ formatDate(review.created_at) }}</span>
+        </div>
+        
+        <p v-if="review.comment" class="review-comment">{{ review.comment }}</p>
+      </div>
+    </div>
+
     <div class="card">
       <h3>Book this walker</h3>
 
       <input type="date" v-model="bookingDate" />
+
+      <div v-if="selectedAvailability" style="margin-top:10px;">
+        <p>
+          <strong>Time:</strong> 
+          {{ formatTime(selectedAvailability.start_time) }} → {{ formatTime(selectedAvailability.end_time) }}
+        </p>
+      </div>
 
       <div v-if="dogs.length">
         <h4>Select your dogs:</h4>
@@ -186,8 +236,11 @@ onMounted(loadPage);
         </label>
       </div>
 
-      <div v-if="bookingDate" style="margin-top:15px; font-size:18px; font-weight:bold;">
-        Total Price: €{{ totalPrice }}
+      <div v-if="bookingDate" style="margin-top:15px;">
+        <p><strong>Base price:</strong> €{{ Number(walker.price_per_30min || 0).toFixed(2) }}</p>
+        <p style="font-size:18px; font-weight:bold;">
+          <strong>Total price:</strong> €{{ totalPrice }}
+        </p>
       </div>
 
       <button @click="bookWalker" style="margin-top:10px;">Book</button>
@@ -200,3 +253,57 @@ onMounted(loadPage);
   <p v-if="loading">Loading...</p>
   <p v-if="!loading && error && !walker">{{ error }}</p>
 </template>
+
+<style scoped>
+.rating {
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.review {
+  border-bottom: 1px solid #eee;
+  padding: 15px 0;
+}
+
+.review:last-child {
+  border-bottom: none;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.review-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  color: #ddd;
+  font-size: 18px;
+}
+
+.star.filled {
+  color: #ffc107;
+}
+
+.review-author {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.review-date {
+  font-size: 12px;
+  color: #666;
+  margin-left: auto;
+}
+
+.review-comment {
+  margin: 8px 0 0 0;
+  color: #333;
+  line-height: 1.5;
+}
+</style>

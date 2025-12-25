@@ -52,7 +52,7 @@ function totalForWalker(w) {
 
 async function loadAddonsForWalker(walkerId) {
   try {
-    const list = await apiGet(`/addons/walker/${walkerId}`);
+    const list = await apiGet(`/walker-addons/walker/${walkerId}`); // FIXED: Changed from /addons to /walker-addons
     addonsByWalker.value = {
       ...addonsByWalker.value,
       [walkerId]: Array.isArray(list) ? list : []
@@ -145,6 +145,17 @@ async function search() {
         <p><strong>Location:</strong> {{ w.location }}</p>
         <p><strong>Base price (30 min):</strong> €{{ Number(w.price_per_30min || 0).toFixed(2) }}</p>
         <p><strong>Max dogs:</strong> {{ w.max_dogs_per_walk }}</p>
+        
+        <p class="rating">
+        ⭐ {{ Number(w.average_rating || 0).toFixed(1) }}
+        <span v-if="w.review_count">
+            ({{ w.review_count }} reviews)
+        </span>
+        <span v-else>
+            (no reviews yet)
+        </span>
+        </p>
+
 
         <div v-if="(addonsByWalker[w.id] || []).length" class="addons">
           <strong>Extras:</strong>

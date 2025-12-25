@@ -27,7 +27,7 @@ function logout() {
   router.push("/");
 }
 </script>
-
+c
 
 <template>
   <div class="app">
