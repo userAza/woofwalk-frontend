@@ -1,20 +1,10 @@
 <template>
-  <section class="home">
+  <div class="page home">
     <h2>Your dog’s perfect walk, every time 🐾</h2>
 
     <p class="subtitle">
-      Find trusted dog walkers near you.  
+      Find trusted dog walkers near you.<br />
       Book easily. Track live. Peace of mind.
     </p>
-
-    <div class="actions">
-      <router-link to="/walkers" class="btn primary">
-        Browse Walkers
-      </router-link>
-
-      <router-link to="/register" class="btn">
-        Create Account
-      </router-link>
-    </div>
-  </section>
+  </div>
 </template>
