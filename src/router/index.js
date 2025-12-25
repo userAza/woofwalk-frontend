@@ -42,7 +42,9 @@ router.beforeEach((to) => {
   if (to.meta?.admin && user?.role !== "admin") {
     return "/profile";
   }
-});
 
+  // ✅ THIS IS THE FIX
+  return true;
+});
 
 export default router;
