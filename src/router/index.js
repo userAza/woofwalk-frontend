@@ -5,6 +5,7 @@ import BrowseWalkers from "../pages/browseWalkers.vue";
 import Login from "../pages/login.vue";
 import Register from "../pages/register.vue";
 import MyBookings from "../pages/myBookings.vue";
+import VetFinder from '../pages/vetFinder.vue';
 
 const routes = [
   { path: "/", component: Home },
@@ -25,7 +26,14 @@ const routes = [
     path: "/admin",
     component: () => import("../pages/admin/adminDashboard.vue"),
     meta: { auth: true, admin: true }
-  }
+  },
+
+    {
+    path: '/vets',
+    name: 'VetFinder',
+    component: VetFinder
+    }
+  
 ];
 
 const router = createRouter({
