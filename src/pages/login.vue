@@ -54,6 +54,11 @@ async function submit() {
           No account yet?
           <router-link to="/register">Create one</router-link>
         </p>
+
+        <!-- ADD THIS HERE ↓ -->
+        <p style="margin-top: 15px; text-align: center;">
+          <router-link to="/forgot-password">Forgot Password?</router-link>
+        </p>
       </div>
     </div>
   </div>

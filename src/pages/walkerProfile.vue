@@ -83,7 +83,6 @@ const totalPrice = computed(() => {
     if (addon) total += num(addon.price);
   });
 
-  // Apply subscription discount
   if (userSubscription.value?.active && userSubscription.value?.discount_percent) {
     const discount = total * (userSubscription.value.discount_percent / 100);
     total -= discount;
@@ -110,7 +109,6 @@ async function loadPage() {
     addons.value = await apiGet(`/addons/walker/${id}`);
     if (!Array.isArray(addons.value)) addons.value = [];
 
-    // Load reviews
     try {
       const reviewData = await apiGet(`/reviews/walker/${id}`);
       reviews.value = reviewData.reviews || [];
@@ -121,7 +119,6 @@ async function loadPage() {
       averageRating.value = 0;
     }
 
-    // Load user's subscription status
     try {
       userSubscription.value = await apiGet("/subscriptions/my-subscription");
     } catch (e) {
@@ -142,8 +139,34 @@ async function bookWalker() {
 
   const slot = selectedAvailability.value;
 
-  if (!walker.value || !slot || !selectedDogs.value.length) {
-    error.value = "Missing booking data";
+  // Better error messages
+  if (!dogs.value || dogs.value.length === 0) {
+    error.value = "You need to add a dog first! Go to your Profile to add one.";
+    return;
+  }
+
+  if (!bookingDate.value || !slot) {
+    error.value = "Please select a date from the available times.";
+    return;
+  }
+
+  // NEW: Check if date is in the past
+  const selectedDate = new Date(bookingDate.value);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (selectedDate < today) {
+    error.value = "Cannot book dates in the past. Please select a future date.";
+    return;
+  }
+
+  if (!selectedDogs.value.length) {
+    error.value = "Please select at least one dog for the walk.";
+    return;
+  }
+
+  if (!walker.value) {
+    error.value = "Walker information is missing.";
     return;
   }
 
@@ -157,7 +180,7 @@ async function bookWalker() {
       addon_ids: selectedAddons.value
     });
 
-    success.value = "Booking created!";
+    success.value = "Booking created successfully!";
 
     bookingDate.value = "";
     selectedDogs.value = [];
@@ -180,7 +203,6 @@ onMounted(loadPage);
       <p><strong>Price (30 min):</strong> €{{ Number(walker.price_per_30min || 0).toFixed(2) }}</p>
       <p><strong>Max dogs:</strong> {{ walker.max_dogs_per_walk }}</p>
       
-      <!-- Rating -->
       <p class="rating">
         ⭐ {{ averageRating.toFixed(1) }}
         <span v-if="reviews.length">
@@ -205,7 +227,6 @@ onMounted(loadPage);
       <p v-else>No availability listed.</p>
     </div>
 
-    <!-- Reviews Section -->
     <div class="card" v-if="reviews.length">
       <h3>Reviews</h3>
 
@@ -227,12 +248,20 @@ onMounted(loadPage);
     <div class="card">
       <h3>Book this walker</h3>
 
-      <input type="date" v-model="bookingDate" />
+      <input type="date" v-model="bookingDate" :min="new Date().toISOString().split('T')[0]" />
 
       <div v-if="selectedAvailability" style="margin-top:10px;">
         <p>
           <strong>Time:</strong> 
           {{ formatTime(selectedAvailability.start_time) }} → {{ formatTime(selectedAvailability.end_time) }}
+        </p>
+      </div>
+
+      <!-- Warning if no dogs -->
+      <div v-if="!dogs.length" style="margin-top: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+        <p style="margin: 0; color: #856404;">
+          ⚠️ <strong>You need to add a dog first!</strong><br>
+          Go to your <router-link to="/profile" style="color: #007bff;">Profile</router-link> to add a dog before booking.
         </p>
       </div>
 
@@ -252,10 +281,10 @@ onMounted(loadPage);
         </label>
       </div>
 
+      <!-- PRICE CALCULATOR (was missing!) -->
       <div v-if="bookingDate" style="margin-top:15px;">
         <p><strong>Base price:</strong> €{{ Number(walker.price_per_30min || 0).toFixed(2) }}</p>
         
-        <!-- NEW: Show subscription discount -->
         <p v-if="userSubscription && userSubscription.active" style="color: green; font-weight: bold;">
           ✅ Subscription discount: -{{ userSubscription.discount_percent }}%
         </p>
