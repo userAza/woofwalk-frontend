@@ -74,7 +74,6 @@ async function login() {
   margin-top: 60px;
 }
 
-/* Bigger card */
 .form-card {
   width: 100%;
   max-width: 520px;
@@ -84,21 +83,18 @@ async function login() {
   gap: 18px;
 }
 
-/* Bigger inputs */
 .form-card input {
   height: 52px;
   font-size: 18px;
   padding: 10px 14px;
 }
 
-/* Bigger button */
 .form-card button {
   height: 52px;
   font-size: 18px;
   cursor: pointer;
 }
 
-/* Error */
 .error {
   color: red;
   margin-top: 4px;

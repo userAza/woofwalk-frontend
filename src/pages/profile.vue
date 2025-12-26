@@ -118,18 +118,18 @@ onMounted(loadProfile);
     
     <div v-if="subscription && subscription.active">
         <p style="color: green; font-size: 18px; font-weight: bold;">
-        ✅ Active Subscription
+        Active Subscription
         </p>
         <p><strong>Discount:</strong> {{ subscription.discount_percent }}% off all walks</p>
         <p><strong>Valid until:</strong> {{ formatDate(subscription.active_until) }}</p>
         <p style="margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 5px; font-size: 14px;">
-        💡 Your discount is applied automatically when you book a walk!
+        Your discount is applied automatically when you book a walk!
         </p>
     </div>
     
     <div v-else>
         <p style="color: gray; font-size: 18px;">
-        ❌ No Active Subscription
+        No Active Subscription
         </p>
         <p style="margin-top: 10px;">
         Complete 10 walks to automatically get a subscription with 20% discount for a month!
@@ -137,7 +137,7 @@ onMounted(loadProfile);
         
         <details style="margin-top: 15px; cursor: pointer;">
         <summary style="padding: 10px; background: #f5f5f5; border-radius: 5px; font-weight: bold;">
-            ℹ️ How it works
+            How it works
         </summary>
         <div style="margin-top: 10px; padding: 15px; background: #fafafa; border-left: 4px solid #2196f3; font-size: 14px;">
             <ul style="margin: 0; padding-left: 20px;">
@@ -165,7 +165,6 @@ onMounted(loadProfile);
 
     <p v-if="!dogs.length">No dogs yet</p>
     
-
     <p class="error" v-if="error">{{ error }}</p>
     <p class="success" v-if="success">{{ success }}</p>
     </div>

@@ -41,7 +41,6 @@ async function searchVets() {
   try {
     vets.value = await apiGet(`/vets?city=${encodeURIComponent(selectedCity.value)}`);
     
-    // Wait for DOM to update, then show map
     await nextTick();
     if (vets.value.length > 0) {
       initMap();
@@ -54,36 +53,28 @@ async function searchVets() {
 }
 
 function initMap() {
-  // Remove existing map if it exists
   if (map) {
     map.remove();
     map = null;
   }
   
-  // Clear old markers
   markers = [];
   
-  // Filter vets with valid coordinates
   const vetsWithCoords = vets.value.filter(v => v.latitude && v.longitude);
   
   if (vetsWithCoords.length === 0) return;
   
-  // Get first vet's coordinates for map center
   const firstVet = vetsWithCoords[0];
   
-  // Create map
   map = L.map('map').setView([firstVet.latitude, firstVet.longitude], 13);
   
-  // Add OpenStreetMap tiles
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
   
-  // Add markers for each vet
   vetsWithCoords.forEach(vet => {
     const marker = L.marker([vet.latitude, vet.longitude]).addTo(map);
     
-    // Add popup with vet info
     marker.bindPopup(`
       <strong>${vet.name}</strong><br>
       ${vet.address}<br>
@@ -93,14 +84,12 @@ function initMap() {
     markers.push(marker);
   });
   
-  // Fit map to show all markers
   if (markers.length > 1) {
     const group = L.featureGroup(markers);
     map.fitBounds(group.getBounds().pad(0.1));
   }
 }
 
-// Watch for city changes to reset search
 watch(selectedCity, () => {
   vets.value = [];
   hasSearched.value = false;
@@ -134,7 +123,6 @@ watch(selectedCity, () => {
       <p v-if="error" style="color: red; margin-top: 10px;">{{ error }}</p>
     </div>
 
-    <!-- MAP -->
     <div v-if="vets.length" style="margin-top: 20px;">
       <div id="map" style="height: 400px; border-radius: 8px; margin-bottom: 20px;"></div>
       
@@ -144,14 +132,14 @@ watch(selectedCity, () => {
         <h4 style="margin-top: 0; color: #667eea;">{{ vet.name }}</h4>
         
         <p v-if="vet.address">
-          <strong>📍 Address:</strong> {{ vet.address }}, {{ vet.city }}
+          <strong>Address:</strong> {{ vet.address }}, {{ vet.city }}
         </p>
         <p v-else>
-          <strong>📍 City:</strong> {{ vet.city }}
+          <strong>City:</strong> {{ vet.city }}
         </p>
         
         <p v-if="vet.phone">
-          <strong>📞 Phone:</strong> {{ vet.phone }}
+          <strong>Phone:</strong> {{ vet.phone }}
         </p>
       </div>
     </div>

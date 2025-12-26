@@ -114,7 +114,6 @@ async function loadPage() {
       reviews.value = reviewData.reviews || [];
       averageRating.value = reviewData.average_rating || 0;
     } catch (e) {
-      console.error("Failed to load reviews:", e);
       reviews.value = [];
       averageRating.value = 0;
     }
@@ -122,11 +121,9 @@ async function loadPage() {
     try {
       userSubscription.value = await apiGet("/subscriptions/my-subscription");
     } catch (e) {
-      console.error("Failed to load subscription:", e);
       userSubscription.value = { active: false, discount_percent: 0 };
     }
   } catch (e) {
-    console.error("Failed to load walker:", e);
     error.value = "Failed to load walker";
   } finally {
     loading.value = false;
@@ -139,7 +136,6 @@ async function bookWalker() {
 
   const slot = selectedAvailability.value;
 
-  // Better error messages
   if (!dogs.value || dogs.value.length === 0) {
     error.value = "You need to add a dog first! Go to your Profile to add one.";
     return;
@@ -150,7 +146,6 @@ async function bookWalker() {
     return;
   }
 
-  // NEW: Check if date is in the past
   const selectedDate = new Date(bookingDate.value);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -257,10 +252,9 @@ onMounted(loadPage);
         </p>
       </div>
 
-      <!-- Warning if no dogs -->
       <div v-if="!dogs.length" style="margin-top: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
         <p style="margin: 0; color: #856404;">
-          ⚠️ <strong>You need to add a dog first!</strong><br>
+          <strong>You need to add a dog first!</strong><br>
           Go to your <router-link to="/profile" style="color: #007bff;">Profile</router-link> to add a dog before booking.
         </p>
       </div>
@@ -281,12 +275,11 @@ onMounted(loadPage);
         </label>
       </div>
 
-      <!-- PRICE CALCULATOR (was missing!) -->
       <div v-if="bookingDate" style="margin-top:15px;">
         <p><strong>Base price:</strong> €{{ Number(walker.price_per_30min || 0).toFixed(2) }}</p>
         
         <p v-if="userSubscription && userSubscription.active" style="color: green; font-weight: bold;">
-          ✅ Subscription discount: -{{ userSubscription.discount_percent }}%
+          Subscription discount: -{{ userSubscription.discount_percent }}%
         </p>
         
         <p style="font-size:18px; font-weight:bold;">

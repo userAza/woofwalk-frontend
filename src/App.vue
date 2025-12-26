@@ -32,7 +32,6 @@ function logout() {
     <h1>WoofWalk</h1>
 
   <nav class="nav">
-  <!-- NOT LOGGED IN -->
   <template v-if="!isLoggedIn">
     <router-link to="/">Home</router-link>
     <router-link to="/login">Login</router-link>
@@ -42,7 +41,6 @@ function logout() {
     <router-link to="/admin/login">Admin</router-link>
   </template>
 
-  <!-- LOGGED IN -->
   <template v-else>
     <router-link to="/">Home</router-link>
     <router-link to="/profile">Profile</router-link>

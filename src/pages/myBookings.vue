@@ -6,7 +6,6 @@ const bookings = ref([]);
 const loading = ref(false);
 const error = ref("");
 
-// Review modal state
 const showReviewModal = ref(false);
 const reviewBooking = ref(null);
 const reviewRating = ref(0);
@@ -80,7 +79,7 @@ async function submitReview() {
     });
 
     closeReviewModal();
-    await loadBookings(); // Reload to update the reviewed status
+    await loadBookings();
   } catch (e) {
     reviewError.value = e.message || "Failed to submit review";
   } finally {
@@ -137,7 +136,6 @@ onMounted(loadBookings);
       </button>
     </div>
 
-    <!-- Review Modal -->
     <div v-if="showReviewModal" class="modal-overlay" @click="closeReviewModal">
       <div class="modal-content" @click.stop>
         <h3>Review {{ reviewBooking?.walker_name }}</h3>

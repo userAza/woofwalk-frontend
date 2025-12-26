@@ -1,18 +1,15 @@
-/* Global reset */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* Page base */
 body {
   font-family: Arial, Helvetica, sans-serif;
   color: black;
   background: #fff0f6;
 }
 
-/* Main app container */
 .app {
   max-width: 900px;
   margin: 0 auto;
@@ -20,7 +17,6 @@ body {
   text-align: center;
 }
 
-/* Navigation */
 .nav {
   display: flex;
   justify-content: center;
@@ -38,7 +34,6 @@ body {
   border-bottom: 2px solid hotpink;
 }
 
-/* Profile page */
 .profile {
   max-width: 600px;
   margin: 40px auto;

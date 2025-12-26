@@ -2,7 +2,6 @@
 import { ref } from "vue";
 import { apiGet } from "../services/api";
 
-// EMPTY by default (no prefilled data)
 const location = ref("");
 const date = ref("");
 const start_time = ref("");
@@ -102,12 +101,10 @@ async function search() {
   <div>
     <h2>Available Dog Walkers</h2>
 
-    <!-- 30-MINUTE WALK NOTICE -->
     <p class="walk-notice">
       All walks are 30 minutes. Prices shown are per 30-minute walk.
     </p>
 
-    <!-- SEARCH BAR -->
     <div class="search-bar">
       <div class="field">
         <label>City</label>
@@ -140,7 +137,6 @@ async function search() {
     <p v-if="loading">Loading...</p>
     <p v-if="error" class="error">{{ error }}</p>
 
-    <!-- RESULTS -->
     <div v-if="walkers.length">
       <div v-for="w in walkers" :key="w.id" class="card">
         <router-link :to="`/walkers/${w.id}`" class="walker-name">
@@ -160,7 +156,6 @@ async function search() {
             (no reviews yet)
         </span>
         </p>
-
 
         <div v-if="(addonsByWalker[w.id] || []).length" class="addons">
           <strong>Extras:</strong>
@@ -198,7 +193,6 @@ async function search() {
 </template>
 
 <style scoped>
-/* 30-MINUTE NOTICE */
 .walk-notice {
   background: #e0f2fe;
   border-left: 4px solid #c80ee9;
@@ -211,7 +205,6 @@ async function search() {
   text-align: center;
 }
 
-/* SEARCH BAR */
 .search-bar {
   display: flex;
   gap: 16px;
@@ -249,7 +242,6 @@ async function search() {
   cursor: pointer;
 }
 
-/* RESULTS */
 .card {
   max-width: 800px;
   margin: 20px auto;

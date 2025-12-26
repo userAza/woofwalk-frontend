@@ -55,7 +55,7 @@ async function submit() {
           <router-link to="/register">Create one</router-link>
         </p>
 
-        <!-- ADD THIS HERE ↓ -->
+
         <p style="margin-top: 15px; text-align: center;">
           <router-link to="/forgot-password">Forgot Password?</router-link>
         </p>
@@ -76,19 +76,19 @@ h2 {
 }
 
 .card {
-  max-width: 520px;          /* wider */
-  padding: 32px 36px;        /* more space inside */
+  max-width: 520px;          
+  padding: 32px 36px;       
 }
 
 .card input {
   width: 100%;
-  padding: 12px 14px;        /* taller inputs */
+  padding: 12px 14px; 
   font-size: 16px;
   margin-bottom: 14px;
 }
 
 .card button {
-  padding: 12px 18px;        /* bigger button */
+  padding: 12px 18px;     
   font-size: 16px;
 }
 
@@ -97,7 +97,7 @@ h2 {
   font-size: 14px;
 }
 .card {
-  margin: 0 auto;   /* ← THIS centers it */
+  margin: 0 auto;  
 }
 
 </style scoped>

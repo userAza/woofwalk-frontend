@@ -6,7 +6,7 @@ const isLoggedIn = computed(() => !!localStorage.getItem("token"));
 
 <template>
   <div class="page">
-    <!-- LOGO - Top Right Corner with underline -->
+
     <div class="logo-container">
       <div class="logo">W</div>
     </div>
@@ -24,7 +24,7 @@ const isLoggedIn = computed(() => !!localStorage.getItem("token"));
       Because your dog deserves more than a "quick walk around the block." 🐶
     </p>
 
-    <!-- removed duplicate login/register buttons here -->
+
 
     <div class="dog-grid">
       <img src="/dogs/dog1.jpg" alt="Dog 1" />

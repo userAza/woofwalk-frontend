@@ -40,7 +40,7 @@ async function loadAdminData() {
   }
 }
 
-/* USERS */
+
 const toggleSubscription = async (u) => {
   await apiPost(`/admin/users/${u.id}/subscription`);
   u.subscription_active = !u.subscription_active;
@@ -51,13 +51,13 @@ const toggleUserBan = async (u) => {
   u.is_banned = !u.is_banned;
 };
 
-/* WALKERS */
+
 const toggleWalkerBan = async (w) => {
   await apiPatch(`/admin/walkers/${w.id}/${w.is_banned ? "unban" : "ban"}`);
   w.is_banned = !w.is_banned;
 };
 
-/* BOOKINGS */
+
 const updateBookingStatus = async (b, status) => {
   await apiPatch(`/admin/bookings/${b.id}/status`, {
     status,
@@ -66,11 +66,10 @@ const updateBookingStatus = async (b, status) => {
   b.status = status;
 };
 
-/* SUBSCRIPTIONS */
 const grantSubscription = async (userId) => {
   try {
     await apiPost(`/subscriptions/grant/${userId}`);
-    await loadAdminData(); // Reload to show updated status
+    await loadAdminData(); 
   } catch (e) {
     alert("Failed to grant subscription");
   }
@@ -82,7 +81,7 @@ const revokeSubscription = async (userId) => {
   try {
     await apiDelete(`/subscriptions/revoke/${userId}`);
     alert("Subscription revoked!");
-    await loadAdminData(); // This reloads the data
+    await loadAdminData(); 
   } catch (e) {
     alert("Failed to revoke subscription: " + e.message);
   }
@@ -98,7 +97,7 @@ onMounted(loadAdminData);
     <p v-if="loading">Loading...</p>
     <p v-if="error" style="color:red">{{ error }}</p>
 
-    <!-- SUBSCRIPTIONS (NEW!) -->
+
     <div class="card">
       <h3>User Subscriptions & Statistics</h3>
       <table border="1" width="100%">
@@ -147,7 +146,6 @@ onMounted(loadAdminData);
       </p>
     </div>
 
-    <!-- USERS -->
     <div class="card" style="margin-top:30px">
       <h3>Users</h3>
       <table border="1" width="100%">
@@ -171,7 +169,7 @@ onMounted(loadAdminData);
       </table>
     </div>
 
-    <!-- WALKERS -->
+
     <div class="card" style="margin-top:30px">
       <h3>Walkers</h3>
       <table border="1" width="100%">
@@ -192,7 +190,7 @@ onMounted(loadAdminData);
       </table>
     </div>
 
-    <!-- BOOKINGS -->
+
     <div class="card" style="margin-top:30px">
       <h3>Bookings</h3>
       <table border="1" width="100%">

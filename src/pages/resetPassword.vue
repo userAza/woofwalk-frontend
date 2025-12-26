@@ -67,7 +67,7 @@ async function resetPassword() {
 
       <div v-if="success">
         <p style="color: green; text-align: center;">
-          ✅ Password reset successfully! Redirecting to login...
+          Password reset successfully! Redirecting to login...
         </p>
       </div>
 
