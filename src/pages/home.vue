@@ -6,7 +6,12 @@ const isLoggedIn = computed(() => !!localStorage.getItem("token"));
 
 <template>
   <div class="page">
-    <h2 class="hero-title">Your dog’s perfect walk, every time 🐾</h2>
+    <!-- LOGO - Top Right Corner with underline -->
+    <div class="logo-container">
+      <div class="logo">W</div>
+    </div>
+
+    <h2 class="hero-title">Your dog's perfect walk, every time 🐾</h2>
 
     <p class="hero-text">
       WoofWalk helps you find trusted dog walkers near you.<br />
@@ -16,7 +21,7 @@ const isLoggedIn = computed(() => !!localStorage.getItem("token"));
     </p>
 
     <p class="hero-joke">
-      Because your dog deserves more than a “quick walk around the block.” 🐶
+      Because your dog deserves more than a "quick walk around the block." 🐶
     </p>
 
     <!-- removed duplicate login/register buttons here -->
@@ -64,4 +69,24 @@ const isLoggedIn = computed(() => !!localStorage.getItem("token"));
   border-radius: 14px;
 }
 
+.logo-container {
+  position: fixed;
+  top: 50px;
+  right: 100px;
+  z-index: 1000;
+}
+
+.logo {
+  width: 70px;
+  height: 70px;
+  color: #d946a6; /* dark pink */
+  font-size: 60px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, sans-serif;
+  border-bottom: 4px solid #000; /* black underline */
+  padding-bottom: 5px;
+}
 </style>
