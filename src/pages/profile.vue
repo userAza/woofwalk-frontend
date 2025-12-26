@@ -4,6 +4,7 @@ import { apiGet, apiPost, apiPatch, apiDelete } from "../services/api";
 
 const user = ref(null);
 const dogs = ref([]);
+const subscription = ref({ active: false, discount_percent: 0, active_until: null });
 
 const editName = ref("");
 const editEmail = ref("");
@@ -16,11 +17,23 @@ const dogAge = ref("");
 const error = ref("");
 const success = ref("");
 
+function formatDate(dateStr) {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("nl-BE");
+}
+
 async function loadProfile() {
   user.value = JSON.parse(localStorage.getItem("user"));
   editName.value = user.value.name;
   editEmail.value = user.value.email;
   dogs.value = await apiGet("/dogs");
+  
+  try {
+    subscription.value = await apiGet("/subscriptions/my-subscription");
+  } catch (e) {
+    subscription.value = { active: false, discount_percent: 0, active_until: null };
+  }
 }
 
 async function saveProfile() {
@@ -81,7 +94,6 @@ onMounted(loadProfile);
   <div class="profile">
     <h2>My profile</h2>
 
-    <!-- USER -->
     <div class="card">
       <h3>User info</h3>
       <div class="row">
@@ -92,7 +104,45 @@ onMounted(loadProfile);
       <p class="success" v-if="profileMessage">{{ profileMessage }}</p>
     </div>
 
-    <!-- DOGS -->
+    <div class="card">
+    <h3>Subscription Status</h3>
+    
+    <div v-if="subscription && subscription.active">
+        <p style="color: green; font-size: 18px; font-weight: bold;">
+        ✅ Active Subscription
+        </p>
+        <p><strong>Discount:</strong> {{ subscription.discount_percent }}% off all walks</p>
+        <p><strong>Valid until:</strong> {{ formatDate(subscription.active_until) }}</p>
+        <p style="margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 5px; font-size: 14px;">
+        💡 Your discount is applied automatically when you book a walk!
+        </p>
+    </div>
+    
+    <div v-else>
+        <p style="color: gray; font-size: 18px;">
+        ❌ No Active Subscription
+        </p>
+        <p style="margin-top: 10px;">
+        Complete 10 walks to automatically get a subscription with 20% discount for a month!
+        </p>
+        
+        <details style="margin-top: 15px; cursor: pointer;">
+        <summary style="padding: 10px; background: #f5f5f5; border-radius: 5px; font-weight: bold;">
+            ℹ️ How it works
+        </summary>
+        <div style="margin-top: 10px; padding: 15px; background: #fafafa; border-left: 4px solid #2196f3; font-size: 14px;">
+            <ul style="margin: 0; padding-left: 20px;">
+            <li>Book walks with any walker</li>
+            <li>After each walk is completed (marked as "done"), your counter increases</li>
+            <li>At 10 completed walks → You automatically get a subscription!</li>
+            <li>Subscription gives you 20% off ALL future bookings</li>
+            <li>The discount is applied automatically when you book</li>
+            </ul>
+        </div>
+        </details>
+    </div>
+    </div>
+
     <div class="card">
       <h3>My dogs</h3>
 
@@ -107,7 +157,6 @@ onMounted(loadProfile);
       <p v-if="!dogs.length">No dogs yet</p>
     </div>
 
-    <!-- ADD DOG -->
     <div class="card">
       <h3>Add a dog</h3>
       <div class="row">
@@ -160,7 +209,6 @@ button.danger {
   border: 1px solid #e57373;
   color: #7a1f1f;
 }
-
 
 .success {
   color: green;

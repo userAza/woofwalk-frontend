@@ -11,6 +11,7 @@ const dogs = ref([]);
 const addons = ref([]);
 const reviews = ref([]);
 const averageRating = ref(0);
+const userSubscription = ref(null);
 
 const bookingDate = ref("");
 const selectedDogs = ref([]);
@@ -82,6 +83,12 @@ const totalPrice = computed(() => {
     if (addon) total += num(addon.price);
   });
 
+  // Apply subscription discount
+  if (userSubscription.value?.active && userSubscription.value?.discount_percent) {
+    const discount = total * (userSubscription.value.discount_percent / 100);
+    total -= discount;
+  }
+
   return total.toFixed(2);
 });
 
@@ -100,7 +107,6 @@ async function loadPage() {
 
     dogs.value = await apiGet("/dogs");
 
-    // FIXED: Correct endpoint for your backend
     addons.value = await apiGet(`/addons/walker/${id}`);
     if (!Array.isArray(addons.value)) addons.value = [];
 
@@ -110,10 +116,20 @@ async function loadPage() {
       reviews.value = reviewData.reviews || [];
       averageRating.value = reviewData.average_rating || 0;
     } catch (e) {
+      console.error("Failed to load reviews:", e);
       reviews.value = [];
       averageRating.value = 0;
     }
+
+    // Load user's subscription status
+    try {
+      userSubscription.value = await apiGet("/subscriptions/my-subscription");
+    } catch (e) {
+      console.error("Failed to load subscription:", e);
+      userSubscription.value = { active: false, discount_percent: 0 };
+    }
   } catch (e) {
+    console.error("Failed to load walker:", e);
     error.value = "Failed to load walker";
   } finally {
     loading.value = false;
@@ -238,6 +254,12 @@ onMounted(loadPage);
 
       <div v-if="bookingDate" style="margin-top:15px;">
         <p><strong>Base price:</strong> €{{ Number(walker.price_per_30min || 0).toFixed(2) }}</p>
+        
+        <!-- NEW: Show subscription discount -->
+        <p v-if="userSubscription && userSubscription.active" style="color: green; font-weight: bold;">
+          ✅ Subscription discount: -{{ userSubscription.discount_percent }}%
+        </p>
+        
         <p style="font-size:18px; font-weight:bold;">
           <strong>Total price:</strong> €{{ totalPrice }}
         </p>

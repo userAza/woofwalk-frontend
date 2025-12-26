@@ -1,15 +1,20 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { apiGet, apiPost, apiPatch } from "../../services/api";
+import { apiGet, apiPost, apiPatch, apiDelete } from "../../services/api";
 
 const users = ref([]);
 const walkers = ref([]);
 const bookings = ref([]);
+const subscriptions = ref([]);
 
 const loading = ref(false);
 const error = ref("");
 
-const formatDate = (d) => new Date(d).toLocaleDateString();
+const formatDate = (d) => {
+  if (!d) return "-";
+  return new Date(d).toLocaleDateString("nl-BE");
+};
+
 const formatPrice = (p) => (p == null ? "-" : Number(p).toFixed(2));
 
 async function loadAdminData() {
@@ -17,15 +22,17 @@ async function loadAdminData() {
   error.value = "";
 
   try {
-    const [u, w, b] = await Promise.all([
+    const [u, w, b, s] = await Promise.all([
       apiGet("/admin/users"),
       apiGet("/admin/walkers"),
-      apiGet("/admin/bookings")
+      apiGet("/admin/bookings"),
+      apiGet("/subscriptions/all")
     ]);
 
     users.value = u;
     walkers.value = w;
     bookings.value = b;
+    subscriptions.value = s;
   } catch (e) {
     error.value = e.message || "Failed to load admin data";
   } finally {
@@ -50,13 +57,35 @@ const toggleWalkerBan = async (w) => {
   w.is_banned = !w.is_banned;
 };
 
-/* BOOKINGS — ONE LOGIC */
+/* BOOKINGS */
 const updateBookingStatus = async (b, status) => {
   await apiPatch(`/admin/bookings/${b.id}/status`, {
     status,
     walker_id: b.walker_id
   });
   b.status = status;
+};
+
+/* SUBSCRIPTIONS */
+const grantSubscription = async (userId) => {
+  try {
+    await apiPost(`/subscriptions/grant/${userId}`);
+    await loadAdminData(); // Reload to show updated status
+  } catch (e) {
+    alert("Failed to grant subscription");
+  }
+};
+
+const revokeSubscription = async (userId) => {
+  if (!confirm("Revoke this subscription?")) return;
+  
+  try {
+    await apiDelete(`/subscriptions/revoke/${userId}`);
+    alert("Subscription revoked!");
+    await loadAdminData(); // This reloads the data
+  } catch (e) {
+    alert("Failed to revoke subscription: " + e.message);
+  }
 };
 
 onMounted(loadAdminData);
@@ -69,8 +98,57 @@ onMounted(loadAdminData);
     <p v-if="loading">Loading...</p>
     <p v-if="error" style="color:red">{{ error }}</p>
 
-    <!-- USERS -->
+    <!-- SUBSCRIPTIONS (NEW!) -->
     <div class="card">
+      <h3>User Subscriptions & Statistics</h3>
+      <table border="1" width="100%">
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Completed Bookings</th>
+          <th>Total Bookings</th>
+          <th>Subscription Status</th>
+          <th>Active Until</th>
+          <th>Discount</th>
+          <th>Action</th>
+        </tr>
+        <tr v-for="s in subscriptions" :key="s.user_id">
+          <td>{{ s.name }}</td>
+          <td>{{ s.email }}</td>
+          <td><strong>{{ s.completed_bookings }}</strong></td>
+          <td>{{ s.total_bookings }}</td>
+          <td>
+            <span :style="{ color: s.active ? 'green' : 'gray' }">
+              {{ s.active ? '✅ Active' : '❌ Inactive' }}
+            </span>
+          </td>
+          <td>{{ formatDate(s.active_until) }}</td>
+          <td>{{ s.discount_percent ? s.discount_percent + '%' : '-' }}</td>
+          <td>
+            <button 
+              v-if="!s.active"
+              @click="grantSubscription(s.user_id)"
+              style="background: green; color: white;"
+            >
+              Grant Sub
+            </button>
+            <button 
+              v-else
+              @click="revokeSubscription(s.user_id)"
+              style="background: red; color: white;"
+            >
+              Revoke
+            </button>
+          </td>
+        </tr>
+      </table>
+      <p style="margin-top: 10px; font-size: 14px; color: #666;">
+        💡 <strong>Auto-subscribe:</strong> Users automatically get subscription after 10 completed bookings
+      </p>
+    </div>
+
+    <!-- USERS -->
+    <div class="card" style="margin-top:30px">
       <h3>Users</h3>
       <table border="1" width="100%">
         <tr>
