@@ -52,7 +52,7 @@ function totalForWalker(w) {
 
 async function loadAddonsForWalker(walkerId) {
   try {
-    const list = await apiGet(`/walker-addons/walker/${walkerId}`); // FIXED: Changed from /addons to /walker-addons
+    const list = await apiGet(`/walker-addons/walker/${walkerId}`);
     addonsByWalker.value = {
       ...addonsByWalker.value,
       [walkerId]: Array.isArray(list) ? list : []
@@ -101,6 +101,11 @@ async function search() {
 <template>
   <div>
     <h2>Available Dog Walkers</h2>
+
+    <!-- 30-MINUTE WALK NOTICE -->
+    <p class="walk-notice">
+      All walks are 30 minutes. Prices shown are per 30-minute walk.
+    </p>
 
     <!-- SEARCH BAR -->
     <div class="search-bar">
@@ -193,6 +198,19 @@ async function search() {
 </template>
 
 <style scoped>
+/* 30-MINUTE NOTICE */
+.walk-notice {
+  background: #e0f2fe;
+  border-left: 4px solid #c80ee9;
+  padding: 12px 16px;
+  margin: 20px auto;
+  max-width: 800px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #000000;
+  text-align: center;
+}
+
 /* SEARCH BAR */
 .search-bar {
   display: flex;
@@ -256,5 +274,10 @@ async function search() {
 
 .error {
   color: red;
+}
+
+.rating {
+  font-size: 16px;
+  margin-top: 10px;
 }
 </style>
