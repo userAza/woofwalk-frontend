@@ -83,8 +83,17 @@ async function updateDog(dog) {
 
 async function deleteDog(id) {
   if (!confirm("Delete this dog?")) return;
-  await apiDelete(`/dogs/${id}`);
-  dogs.value = dogs.value.filter(d => d.id !== id);
+  
+  error.value = "";
+  success.value = "";
+  
+  try {
+    await apiDelete(`/dogs/${id}`);
+    dogs.value = dogs.value.filter(d => d.id !== id);
+    success.value = "Dog deleted successfully";
+  } catch (e) {
+    error.value = e?.message || "Cannot delete dog - it has booking history. Cancel bookings first.";
+  }
 }
 
 onMounted(loadProfile);
@@ -144,19 +153,23 @@ onMounted(loadProfile);
     </div>
 
     <div class="card">
-      <h3>My dogs</h3>
+    <h3>My dogs</h3>
 
-      <div v-for="d in dogs" :key="d.id" class="dog-row">
+    <div v-for="d in dogs" :key="d.id" class="dog-row">
         <input v-model="d.name" placeholder="Name" />
         <input v-model="d.breed" placeholder="Breed" />
         <input v-model.number="d.age" type="number" placeholder="Age" />
         <button @click="updateDog(d)">Save</button>
         <button class="danger" @click="deleteDog(d.id)">Delete</button>
-      </div>
-
-      <p v-if="!dogs.length">No dogs yet</p>
     </div>
 
+    <p v-if="!dogs.length">No dogs yet</p>
+    
+
+    <p class="error" v-if="error">{{ error }}</p>
+    <p class="success" v-if="success">{{ success }}</p>
+    </div>
+    
     <div class="card">
       <h3>Add a dog</h3>
       <div class="row">
